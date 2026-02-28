@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gradebook 0.3.0</title>
+  <title>Gradebook 0.5.0</title>
   <link rel="stylesheet" href="public/css/style.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
 </head>
@@ -63,10 +63,10 @@
         </div>
 
         <div class="taskbar-right">
+          <select id="classSelector" class="class-selector"></select>
+
           <div class="dropdown-wrap">
-            <button class="icon-btn" id="helpBtn" aria-label="Help">
-              <span class="material-icons">help</span>
-            </button>
+            <button class="icon-btn" id="helpBtn" aria-label="Help"><span class="material-icons">help</span></button>
             <div id="helpDropdown" class="dark-dropdown hidden" role="menu" aria-label="Help menu">
               <button class="dropdown-item" data-action="Support Center">Support Center</button>
               <button class="dropdown-item" data-action="Guides">Guides</button>
@@ -75,9 +75,7 @@
           </div>
 
           <div class="dropdown-wrap">
-            <button class="icon-btn" id="notifyBtn" aria-label="Notifications">
-              <span class="material-icons">notifications</span>
-            </button>
+            <button class="icon-btn" id="notifyBtn" aria-label="Notifications"><span class="material-icons">notifications</span></button>
             <div id="notifyDropdown" class="dark-dropdown hidden" role="menu" aria-label="Notifications menu">
               <button class="dropdown-item" data-action="3 new grade alerts">3 new grade alerts</button>
               <button class="dropdown-item" data-action="2 attendance updates">2 attendance updates</button>
@@ -86,9 +84,7 @@
           </div>
 
           <div class="dropdown-wrap">
-            <button class="icon-btn" id="accountBtn" aria-label="Account">
-              <span class="material-icons">account_circle</span>
-            </button>
+            <button class="icon-btn" id="accountBtn" aria-label="Account"><span class="material-icons">account_circle</span></button>
             <div id="accountDropdown" class="dark-dropdown hidden" role="menu" aria-label="Account menu">
               <button class="dropdown-item" data-action="Profile">Profile</button>
               <button class="dropdown-item" data-action="Preferences">Preferences</button>
@@ -98,7 +94,7 @@
         </div>
       </header>
 
-      <div class="main-layout">
+      <div class="main-layout" id="mainLayout">
         <aside class="sidebar" id="sidebar">
           <div class="sidebar-heading">Instruction</div>
           <nav>
@@ -113,12 +109,32 @@
         </aside>
 
         <main class="content-panel">
-          <h2 id="sectionTitle">Control Center</h2>
+          <div class="title-row">
+            <h2 id="sectionTitle">Control Center</h2>
+            <button class="toolbar-btn" id="openSettingsBtn" type="button">Grade Settings</button>
+          </div>
+          <p id="classMeta" class="class-meta"></p>
           <section id="sectionContent" aria-live="polite"></section>
           <p id="dashboardStatus" class="status-line"></p>
         </main>
       </div>
+
+      <div class="quick-dock">
+        <button class="dock-btn" data-open-section="Grade Book"><span class="material-icons">assessment</span><span>Gradebook</span></button>
+        <button class="dock-btn" data-open-section="Attendance"><span class="material-icons">fact_check</span><span>Attendance</span></button>
+        <button class="dock-btn" data-open-section="Roster"><span class="material-icons">groups</span><span>Roster</span></button>
+      </div>
     </section>
+  </div>
+
+  <div id="overlay" class="overlay hidden">
+    <div class="overlay-card">
+      <div class="overlay-head">
+        <h3 id="overlayTitle">Manage</h3>
+        <button id="closeOverlayBtn" class="icon-btn" aria-label="Close"><span class="material-icons">close</span></button>
+      </div>
+      <div id="overlayBody" class="overlay-body"></div>
+    </div>
   </div>
 
   <script defer src="public/js/main.js"></script>
