@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'gradebook.v0.6.0';
+const STORAGE_KEY = 'gradebook.v0.7.0';
 
 const authView = document.getElementById('authView');
 const dashboardView = document.getElementById('dashboardView');
@@ -44,6 +44,7 @@ const today = new Date().toISOString().slice(0, 10);
 const FLAGS = ['T', 'X', 'I', 'M', 'L', 'Ch', 'Dr'];
 let pendingDeleteAction = null;
 let assignmentMenuTargetId = null;
+let gradeEditorKey = null;
 
 function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -51,33 +52,27 @@ function uid(prefix) {
 
 function createDefaultState() {
   const clsA = { id: uid('cls'), name: 'Math 6 (Gravy)', room: '101', teacher: 'Ms. Gravy', gradeLevel: '6' };
-  const clsB = { id: uid('cls'), name: 'Science 6', room: '204', teacher: 'Mr. Walker', gradeLevel: '6' };
-
   const categories = [
-    { id: uid('cat'), name: 'Projects', weight: 20 },
-    { id: uid('cat'), name: 'Homework', weight: 20 },
-    { id: uid('cat'), name: 'Classwork', weight: 30 },
-    { id: uid('cat'), name: 'Participation', weight: 30 }
+    { id: uid('cat'), name: 'Formative', weight: 55 },
+    { id: uid('cat'), name: 'Summative', weight: 45 }
   ];
-
   const students = [
-    { id: uid('stu'), firstName: 'Brooke', lastName: 'Barnes', code: 'S1001', classId: clsA.id },
-    { id: uid('stu'), firstName: 'Daniel', lastName: 'Dominguez', code: 'S1002', classId: clsA.id },
-    { id: uid('stu'), firstName: 'Loziel', lastName: 'Donato', code: 'S1003', classId: clsA.id },
-    { id: uid('stu'), firstName: 'Richard', lastName: 'Dugan', code: 'S1004', classId: clsA.id }
+    { id: uid('stu'), firstName: 'Brooke', lastName: 'Barnes', code: '2_1', classId: clsA.id },
+    { id: uid('stu'), firstName: 'Daniel', lastName: 'Dominguez', code: '2_2', classId: clsA.id }
   ];
 
   const assignments = [
-    { id: uid('asg'), classId: clsA.id, name: 'SMC', startDate: today, dueDate: today, points: 100, multiplier: 1, description: '', categoryId: categories[0].id, notSetTotal: false },
-    { id: uid('asg'), classId: clsA.id, name: 'Investigate', startDate: today, dueDate: today, points: 100, multiplier: 1, description: '', categoryId: categories[1].id, notSetTotal: false },
-    { id: uid('asg'), classId: clsA.id, name: 'Collab', startDate: today, dueDate: today, points: 100, multiplier: 1, description: '', categoryId: categories[2].id, notSetTotal: false },
-    { id: uid('asg'), classId: clsA.id, name: 'JOR', startDate: today, dueDate: today, points: 100, multiplier: 1, description: '', categoryId: categories[3].id, notSetTotal: false }
+    { id: uid('asg'), classId: clsA.id, name: 'Week 1 Assignments', startDate: '2026-02-01', dueDate: '2026-02-08', points: 100, multiplier: 1, categoryId: categories[0].id, description: '', notSetTotal: false },
+    { id: uid('asg'), classId: clsA.id, name: 'W1 Warmups', startDate: '2026-02-03', dueDate: '2026-02-08', points: 100, multiplier: 1, categoryId: categories[0].id, description: '', notSetTotal: false },
+    { id: uid('asg'), classId: clsA.id, name: 'Week 2 Assignments', startDate: '2026-02-10', dueDate: '2026-02-15', points: 100, multiplier: 1, categoryId: categories[1].id, description: '', notSetTotal: false },
+    { id: uid('asg'), classId: clsA.id, name: 'W2 Warmups', startDate: '2026-02-12', dueDate: '2026-02-16', points: 100, multiplier: 1, categoryId: categories[1].id, description: '', notSetTotal: false },
+    { id: uid('asg'), classId: clsA.id, name: 'Geometry syllabus', startDate: '2026-02-28', dueDate: '2026-02-28', points: 100, multiplier: 1, categoryId: categories[0].id, description: '', notSetTotal: true }
   ];
 
   const grades = {};
   students.forEach((student, si) => {
     assignments.forEach((assignment, ai) => {
-      grades[`${student.id}|${assignment.id}`] = { score: 55 + ((si * 12 + ai * 14) % 46), flag: FLAGS[(si + ai) % 3 === 0 ? 0 : 1] };
+      grades[`${student.id}|${assignment.id}`] = { score: [100, 20, 100, 80, ''][ai] ?? (70 + si * 10), flag: ai % 2 === 0 ? 'T' : 'X' };
     });
   });
 
@@ -87,7 +82,7 @@ function createDefaultState() {
   });
 
   return {
-    classes: [clsA, clsB],
+    classes: [clsA],
     categories,
     students,
     assignments,
@@ -111,9 +106,7 @@ function normalizeGradeEntry(value) {
   if (value && typeof value === 'object') {
     return { score: value.score ?? '', flag: value.flag || '' };
   }
-  if (value === '' || value === null || value === undefined) {
-    return { score: '', flag: '' };
-  }
+  if (value === '' || value === null || value === undefined) return { score: '', flag: '' };
   return { score: Number(value), flag: '' };
 }
 
@@ -133,12 +126,12 @@ function loadState() {
         semesters: { ...fallback.settings.semesters, ...((parsed.settings || {}).semesters || {}) }
       }
     };
-    const fixedGrades = {};
+
+    const fixed = {};
     Object.entries(merged.grades || {}).forEach(([key, value]) => {
-      fixedGrades[key] = normalizeGradeEntry(value);
+      fixed[key] = normalizeGradeEntry(value);
     });
-    merged.grades = fixedGrades;
-    if (!merged.classes.length) return fallback;
+    merged.grades = fixed;
     return merged;
   } catch {
     return createDefaultState();
@@ -167,47 +160,30 @@ function passwordScore(value) {
 function activeClass() {
   return state.classes.find((item) => item.id === state.currentClassId) || state.classes[0];
 }
+
 function studentsForClass(classId = state.currentClassId) {
   return state.students.filter((item) => item.classId === classId);
 }
-function assignmentsForClass(classId = state.currentClassId) {
-  return state.assignments.filter((item) => item.classId === classId);
+
+function assignmentsForClass(classId = state.currentClassId, order = 'oldest') {
+  const list = state.assignments.filter((item) => item.classId === classId);
+  list.sort((a, b) => {
+    const d = a.dueDate.localeCompare(b.dueDate);
+    return order === 'oldest' ? d : -d;
+  });
+  return list;
 }
+
 function fullName(student) {
   return `${student.lastName}, ${student.firstName}`;
 }
+
 function categoryName(id) {
   return state.categories.find((item) => item.id === id)?.name || 'Uncategorized';
 }
+
 function assignmentById(id) {
   return state.assignments.find((item) => item.id === id);
-}
-
-function getScoreClass(score) {
-  if (score === '' || score === null || score === undefined || Number.isNaN(Number(score))) return 'blank';
-  return Number(score) >= 70 ? 'pass' : 'fail';
-}
-
-function effectivePoints(assignment) {
-  return assignment.notSetTotal ? 0 : Number(assignment.points || 0);
-}
-
-function studentOverall(studentId) {
-  const assignments = assignmentsForClass();
-  let totalWeight = 0;
-  let total = 0;
-  assignments.forEach((assignment) => {
-    const key = `${studentId}|${assignment.id}`;
-    const entry = normalizeGradeEntry(state.grades[key]);
-    if (entry.flag === 'X' || entry.flag === 'Dr') return;
-    const points = effectivePoints(assignment);
-    const score = entry.score === '' ? 0 : Number(entry.score);
-    if (points <= 0) return;
-    totalWeight += points;
-    total += Math.max(0, Math.min(points, score));
-  });
-  if (totalWeight === 0) return 'N/A';
-  return `${((total / totalWeight) * 100).toFixed(1)}%`;
 }
 
 function renderClassSelector() {
@@ -232,9 +208,9 @@ function closeAllDropdowns() {
 }
 
 function toggleDropdown(target) {
-  const willOpen = target.classList.contains('hidden');
+  const open = target.classList.contains('hidden');
   closeAllDropdowns();
-  if (willOpen) target.classList.remove('hidden');
+  if (open) target.classList.remove('hidden');
 }
 
 function openConfirm(message, onConfirm) {
@@ -246,6 +222,61 @@ function openConfirm(message, onConfirm) {
 function closeConfirm() {
   confirmOverlay.classList.add('hidden');
   pendingDeleteAction = null;
+}
+
+function effectiveScore(entry, assignment) {
+  if (entry.flag === 'M' || entry.flag === 'Ch') return 0;
+  if (entry.score === '' || entry.score === null || entry.score === undefined) return '';
+  return Number(entry.score);
+}
+
+function computeDisplayPercent(entry, assignment) {
+  const score = effectiveScore(entry, assignment);
+  if (score === '') return '';
+  const points = Number(assignment.points || 0);
+
+  if (assignment.notSetTotal) {
+    if (score === '') return '';
+    return `${Math.round((100 + score) * 10) / 10}%`;
+  }
+  if (points <= 0) return '';
+  return `${Math.round((score / points) * 1000) / 10}%`;
+}
+
+function studentOverall(studentId) {
+  const assignments = assignmentsForClass(state.currentClassId, 'oldest');
+  let totalPoints = 0;
+  let totalScore = 0;
+
+  assignments.forEach((assignment) => {
+    const key = `${studentId}|${assignment.id}`;
+    const entry = normalizeGradeEntry(state.grades[key]);
+    if (entry.flag === 'X' || entry.flag === 'Dr' || entry.flag === 'I') return;
+
+    const score = effectiveScore(entry, assignment);
+    if (score === '') return; // blank not counted
+
+    if (assignment.notSetTotal) {
+      totalPoints += 100;
+      totalScore += 100 + Number(score);
+      return;
+    }
+
+    const points = Number(assignment.points || 0);
+    if (points <= 0) return;
+    totalPoints += points;
+    totalScore += Math.max(0, Math.min(points, Number(score)));
+  });
+
+  if (totalPoints === 0) return 'blank';
+  let percent = (totalScore / totalPoints) * 100;
+  if (state.studentRoundedView) percent = Math.ceil(percent);
+  return `${percent.toFixed(1)}%`;
+}
+
+function scoreClass(value) {
+  if (value === '' || value === null || value === undefined) return 'blank';
+  return Number(value) >= 70 ? 'pass' : 'fail';
 }
 
 function renderSection(sectionName) {
@@ -294,7 +325,7 @@ function renderControlCenter() {
   wireClassQuickButtons(sectionContent);
 }
 
-function renderFlagsLegend() {
+function flagsLegendHtml() {
   return `
     <div class="badge-list">
       <span class="flag-badge flag-t">T Turned In</span>
@@ -312,7 +343,7 @@ function renderFlagsLegend() {
 
 function renderGradeBook() {
   const students = studentsForClass();
-  const assignments = assignmentsForClass();
+  const assignments = assignmentsForClass(state.currentClassId, 'oldest');
 
   const headers = assignments
     .map((assignment) => `<th class="assignment-thin" data-assignment-title="${assignment.id}"><div class="th-label">${assignment.name}</div></th>`)
@@ -322,24 +353,25 @@ function renderGradeBook() {
     .map((student) => {
       const rowId = `${state.currentClassId}|${student.id}`;
       const expanded = !!state.expandedRows[rowId];
-
-      const gradeCells = assignments
+      const cells = assignments
         .map((assignment) => {
           const key = `${student.id}|${assignment.id}`;
           const entry = normalizeGradeEntry(state.grades[key]);
-          const points = effectivePoints(assignment);
-          const label = assignment.notSetTotal ? `${entry.score === '' ? '-' : entry.score}/0` : `${entry.score === '' ? '-' : entry.score}/${points}`;
-          return `<td class="score-cell ${getScoreClass(entry.score)}"><input class="score-input" type="number" min="0" max="${state.settings.maxOverallGrade}" value="${entry.score}" data-grade-key="${key}" /><div>${label}${entry.flag ? `<span class="grade-flag-pill">${entry.flag}</span>` : ''}</div></td>`;
+          const score = effectiveScore(entry, assignment);
+          const display = score === '' ? '-' : score;
+          const denom = assignment.notSetTotal ? 0 : Number(assignment.points || 0);
+          const percent = computeDisplayPercent(entry, assignment);
+          return `<td class="score-cell ${scoreClass(score)}"><button class="grade-cell-btn" data-edit-grade="${key}"><div>${display}</div><div>${display}/${denom}</div>${percent ? `<div>${percent}</div>` : '<div>blank</div>'}${entry.flag ? `<span class="grade-flag-pill">${entry.flag}</span>` : ''}</button></td>`;
         })
         .join('');
 
       return `
       <tr>
-        <td><button class="student-name-btn" data-student-view="${student.id}">${fullName(student)}</button></td>
+        <td><button class="student-name-btn" data-student-view="${student.id}">${student.code}</button></td>
         <td class="count-col">${studentOverall(student.id)}</td>
         <td class="count-col"><button class="row-arrow" data-row-toggle="${rowId}">${expanded ? '▼' : '▶'} ${state.categories.length}</button></td>
         <td class="count-col">${assignments.length}</td>
-        ${gradeCells}
+        ${cells}
       </tr>
       ${expanded ? `<tr class="collapsed-row"><td colspan="${4 + assignments.length}">Categories: ${state.categories.map((item) => `${item.name} (${item.weight}%)`).join(' · ')}</td></tr>` : ''}
       `;
@@ -354,7 +386,7 @@ function renderGradeBook() {
         <button class="toolbar-btn" id="manageAssignmentsBtn" type="button">Manage Assignments</button>
         <button class="toolbar-btn" id="manageCategoriesBtn" type="button">Manage Categories</button>
       </div>
-      ${renderFlagsLegend()}
+      ${flagsLegendHtml()}
       <div class="table-wrap">
         <table class="data-table">
           <thead>
@@ -366,12 +398,9 @@ function renderGradeBook() {
               ${headers}
             </tr>
           </thead>
-          <tbody>
-            ${rows || `<tr><td colspan="${4 + Math.max(1, assignments.length)}">No students in this class.</td></tr>`}
-          </tbody>
+          <tbody>${rows || `<tr><td colspan="${4 + Math.max(1, assignments.length)}">No students in this class.</td></tr>`}</tbody>
         </table>
       </div>
-      <div id="studentViewPanel"></div>
     </section>
   `;
 
@@ -389,22 +418,10 @@ function renderGradeBook() {
   document.getElementById('manageAssignmentsBtn').addEventListener('click', () => openOverlay('assignments'));
   document.getElementById('manageCategoriesBtn').addEventListener('click', () => openOverlay('categories'));
 
-  sectionContent.querySelectorAll('[data-grade-key]').forEach((input) => {
-    input.addEventListener('input', () => {
-      const key = input.dataset.gradeKey;
-      const value = input.value.trim();
-      const current = normalizeGradeEntry(state.grades[key]);
-      current.score = value === '' ? '' : Math.max(0, Math.min(state.settings.maxOverallGrade, Number(value)));
-      state.grades[key] = current;
-      saveState();
-      renderGradeBook();
-    });
-  });
-
   sectionContent.querySelectorAll('[data-row-toggle]').forEach((button) => {
     button.addEventListener('click', () => {
-      const rowId = button.dataset.rowToggle;
-      state.expandedRows[rowId] = !state.expandedRows[rowId];
+      const key = button.dataset.rowToggle;
+      state.expandedRows[key] = !state.expandedRows[key];
       saveState();
       renderGradeBook();
     });
@@ -414,7 +431,14 @@ function renderGradeBook() {
     button.addEventListener('click', () => {
       state.selectedStudentId = button.dataset.studentView;
       saveState();
-      renderStudentView();
+      openOverlay('studentView');
+    });
+  });
+
+  sectionContent.querySelectorAll('[data-edit-grade]').forEach((button) => {
+    button.addEventListener('click', () => {
+      gradeEditorKey = button.dataset.editGrade;
+      openOverlay('gradeEdit');
     });
   });
 
@@ -427,98 +451,18 @@ function renderGradeBook() {
       assignmentMenu.classList.remove('hidden');
     });
   });
-
-  renderStudentView();
-}
-
-function renderStudentView() {
-  const panel = document.getElementById('studentViewPanel');
-  if (!panel) return;
-  if (!state.selectedStudentId) {
-    panel.innerHTML = '';
-    return;
-  }
-  const student = state.students.find((item) => item.id === state.selectedStudentId);
-  if (!student) {
-    panel.innerHTML = '';
-    return;
-  }
-
-  const assignments = assignmentsForClass();
-  const categorySelect = `<option value="all">All Categories</option>${state.categories.map((item) => `<option value="${item.id}">${item.name}</option>`).join('')}`;
-  const rows = assignments
-    .map((assignment) => {
-      const key = `${student.id}|${assignment.id}`;
-      const entry = normalizeGradeEntry(state.grades[key]);
-      const total = assignment.notSetTotal ? 0 : assignment.points;
-      return `
-        <div class="assignment-student-row" data-assignment-row="${assignment.id}" data-category-id="${assignment.categoryId}">
-          <div>
-            <strong>${assignment.name}</strong>
-            <div>${categoryName(assignment.categoryId)} · Due ${assignment.dueDate}</div>
-          </div>
-          <div>${entry.score === '' ? '-' : entry.score} / ${total}</div>
-          <div>
-            <select data-flag-edit="${key}">
-              <option value="">No Flag</option>
-              ${FLAGS.map((flag) => `<option value="${flag}" ${entry.flag === flag ? 'selected' : ''}>${flag}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-      `;
-    })
-    .join('');
-
-  panel.innerHTML = `
-    <div class="student-view ${state.studentRoundedView ? 'rounded-student-view' : ''}">
-      <div class="action-row">
-        <strong>${fullName(student)} · Student View</strong>
-        <select id="studentCategoryFilter">${categorySelect}</select>
-        <label class="control-row"><input id="roundedViewToggle" type="checkbox" class="sharp-checkbox" ${state.studentRoundedView ? 'checked' : ''}/> Rounded View</label>
-      </div>
-      <div id="studentAssignmentList">${rows || '<p>No assignments.</p>'}</div>
-    </div>
-  `;
-
-  document.getElementById('studentCategoryFilter').addEventListener('change', (event) => {
-    const selected = event.target.value;
-    panel.querySelectorAll('[data-assignment-row]').forEach((row) => {
-      row.classList.toggle('hidden', selected !== 'all' && row.dataset.categoryId !== selected);
-    });
-  });
-
-  document.getElementById('roundedViewToggle').addEventListener('change', (event) => {
-    state.studentRoundedView = event.target.checked;
-    saveState();
-    renderStudentView();
-  });
-
-  panel.querySelectorAll('[data-flag-edit]').forEach((select) => {
-    select.addEventListener('change', () => {
-      const key = select.dataset.flagEdit;
-      const entry = normalizeGradeEntry(state.grades[key]);
-      entry.flag = select.value;
-      state.grades[key] = entry;
-      saveState();
-      renderGradeBook();
-    });
-  });
 }
 
 function renderAttendance() {
   const rows = studentsForClass()
     .map((student, idx) => {
       const item = state.attendance[student.id] || { status: 'P', note: '' };
-      const btn = (status) => `<button class="pat-btn ${item.status === status ? 'active' : ''}" data-pat="${student.id}|${status}">${status}</button>`;
-      return `<tr><td>${idx + 1}</td><td>${fullName(student)}</td><td><div class="pat-group">${btn('P')}${btn('A')}${btn('T')}</div></td><td><input data-note="${student.id}" value="${item.note}" /></td></tr>`;
+      const mk = (status) => `<button class="pat-btn ${item.status === status ? 'active' : ''}" data-pat="${student.id}|${status}">${status}</button>`;
+      return `<tr><td>${idx + 1}</td><td>${fullName(student)}</td><td><div class="pat-group">${mk('P')}${mk('A')}${mk('T')}</div></td><td><input data-note="${student.id}" value="${item.note}" /></td></tr>`;
     })
     .join('');
 
-  sectionContent.innerHTML = `
-    <section class="panel">
-      <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Student</th><th>P/A/T</th><th>Comments</th></tr></thead><tbody>${rows || '<tr><td colspan="4">No students.</td></tr>'}</tbody></table></div>
-    </section>
-  `;
+  sectionContent.innerHTML = `<section class="panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Student</th><th>P/A/T</th><th>Comments</th></tr></thead><tbody>${rows || '<tr><td colspan="4">No students.</td></tr>'}</tbody></table></div></section>`;
 
   sectionContent.querySelectorAll('[data-pat]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -558,14 +502,14 @@ function renderSeatingCharts() {
 
 function renderGroups() {
   const students = studentsForClass();
-  const mid = Math.ceil(students.length / 2);
-  const a = students.slice(0, mid).map(fullName).join(', ') || 'No students';
-  const b = students.slice(mid).map(fullName).join(', ') || 'No students';
+  const half = Math.ceil(students.length / 2);
+  const a = students.slice(0, half).map(fullName).join(', ') || 'No students';
+  const b = students.slice(half).map(fullName).join(', ') || 'No students';
   sectionContent.innerHTML = `<section class="panel card-grid"><article class="class-card"><h3>Group A</h3><p>${a}</p></article><article class="class-card"><h3>Group B</h3><p>${b}</p></article></section>`;
 }
 
 function renderPostGrades() {
-  const count = Object.values(state.grades).filter((item) => normalizeGradeEntry(item).score !== '').length;
+  const count = Object.values(state.grades).filter((value) => normalizeGradeEntry(value).score !== '').length;
   sectionContent.innerHTML = `<section class="panel card-grid"><article class="class-card"><h3>Recorded Scores</h3><p>${count}</p></article><article class="class-card"><h3>Local Save</h3><p>Enabled</p></article></section>`;
 }
 
@@ -573,8 +517,9 @@ function wireClassQuickButtons(root) {
   root.querySelectorAll('[data-class-switch]').forEach((button) => {
     button.addEventListener('click', () => {
       state.currentClassId = button.dataset.classSwitch;
-      renderClassSelector();
+      state.selectedStudentId = null;
       saveState();
+      renderClassSelector();
       selectNavBySection(button.dataset.openSection);
       renderSection(button.dataset.openSection);
     });
@@ -592,7 +537,7 @@ function wireClassQuickButtons(root) {
         state.classes = state.classes.filter((item) => item.id !== classId);
         state.students = state.students.filter((item) => item.classId !== classId);
         state.assignments = state.assignments.filter((item) => item.classId !== classId);
-        if (!state.classes.length) state.classes = [createDefaultState().classes[0]];
+        if (!state.classes.length) state.classes = createDefaultState().classes;
         if (!state.classes.some((item) => item.id === state.currentClassId)) state.currentClassId = state.classes[0].id;
         saveState();
         renderClassSelector();
@@ -604,33 +549,50 @@ function wireClassQuickButtons(root) {
 
 function openOverlay(kind, editId = null) {
   overlay.classList.remove('hidden');
+
   if (kind === 'assignments') {
     overlayTitle.textContent = 'Manage Assignments';
     overlayAssignments(editId);
+    return;
   }
   if (kind === 'categories') {
     overlayTitle.textContent = 'Manage Categories';
     overlayCategories(editId);
+    return;
   }
   if (kind === 'students') {
     overlayTitle.textContent = 'Manage Students';
     overlayStudents(editId);
+    return;
   }
   if (kind === 'classes') {
     overlayTitle.textContent = 'Manage Classes';
     overlayClasses(editId);
+    return;
   }
   if (kind === 'settings') {
     overlayTitle.textContent = 'Grade Settings / Bulk Options';
     overlaySettings();
+    return;
   }
   if (kind === 'bulk') {
     overlayTitle.textContent = 'Bulk Mass Grade Change';
     overlayBulkMass();
+    return;
   }
   if (kind === 'comments') {
     overlayTitle.textContent = 'Manage Student Comments';
     overlayBody.innerHTML = '<p>Comment manager placeholder for the selected assignment.</p>';
+    return;
+  }
+  if (kind === 'studentView') {
+    overlayTitle.textContent = 'Student View';
+    overlayStudentView();
+    return;
+  }
+  if (kind === 'gradeEdit') {
+    overlayTitle.textContent = 'Custom Edit Grade Value';
+    overlayGradeEdit();
   }
 }
 
@@ -638,11 +600,118 @@ function closeOverlay() {
   overlay.classList.add('hidden');
 }
 
+function overlayStudentView() {
+  const student = state.students.find((item) => item.id === state.selectedStudentId);
+  if (!student) {
+    overlayBody.innerHTML = '<p>No student selected.</p>';
+    return;
+  }
+
+  const assignments = assignmentsForClass(state.currentClassId, 'latest');
+  const options = `<option value="all">All Categories</option>${state.categories.map((item) => `<option value="${item.id}">${item.name}</option>`).join('')}`;
+  const rows = assignments
+    .map((assignment) => {
+      const key = `${student.id}|${assignment.id}`;
+      const entry = normalizeGradeEntry(state.grades[key]);
+      const score = effectiveScore(entry, assignment);
+      const shown = score === '' ? '-' : score;
+      const denom = assignment.notSetTotal ? 0 : Number(assignment.points || 0);
+      return `
+        <div class="assignment-student-row" data-category-id="${assignment.categoryId}">
+          <div>
+            <strong>${assignment.name}</strong>
+            <div>${categoryName(assignment.categoryId)} · Due ${assignment.dueDate}</div>
+          </div>
+          <div>${shown} / ${denom}</div>
+          <div><select data-student-flag="${key}"><option value="">No Flag</option>${FLAGS.map((flag) => `<option value="${flag}" ${entry.flag === flag ? 'selected' : ''}>${flag}</option>`).join('')}</select></div>
+        </div>
+      `;
+    })
+    .join('');
+
+  overlayBody.innerHTML = `
+    <div class="student-view-overlay">
+      <div class="action-row">
+        <strong>${student.code} · ${fullName(student)} · Student View</strong>
+      </div>
+      <div class="action-row">
+        <select id="studentOverlayFilter">${options}</select>
+        <label class="control-row"><input id="studentOverlayRounded" type="checkbox" class="sharp-checkbox" ${state.studentRoundedView ? 'checked' : ''}/> Rounded View</label>
+      </div>
+      <div id="studentOverlayRows">${rows}</div>
+    </div>
+  `;
+
+  document.getElementById('studentOverlayFilter').addEventListener('change', (event) => {
+    const selected = event.target.value;
+    overlayBody.querySelectorAll('.assignment-student-row').forEach((row) => {
+      row.classList.toggle('hidden', selected !== 'all' && row.dataset.categoryId !== selected);
+    });
+  });
+
+  document.getElementById('studentOverlayRounded').addEventListener('change', (event) => {
+    state.studentRoundedView = event.target.checked;
+    saveState();
+    renderSection('Grade Book');
+    openOverlay('studentView');
+  });
+
+  overlayBody.querySelectorAll('[data-student-flag]').forEach((select) => {
+    select.addEventListener('change', () => {
+      const key = select.dataset.studentFlag;
+      const entry = normalizeGradeEntry(state.grades[key]);
+      entry.flag = select.value;
+      state.grades[key] = entry;
+      saveState();
+      renderSection('Grade Book');
+    });
+  });
+}
+
+function overlayGradeEdit() {
+  if (!gradeEditorKey) {
+    overlayBody.innerHTML = '<p>No grade cell selected.</p>';
+    return;
+  }
+
+  const [studentId, assignmentId] = gradeEditorKey.split('|');
+  const student = state.students.find((item) => item.id === studentId);
+  const assignment = assignmentById(assignmentId);
+  if (!student || !assignment) {
+    overlayBody.innerHTML = '<p>Grade target not found.</p>';
+    return;
+  }
+
+  const entry = normalizeGradeEntry(state.grades[gradeEditorKey]);
+
+  overlayBody.innerHTML = `
+    <form id="gradeEditForm" class="form-grid">
+      <div class="full-span"><strong>${fullName(student)} · ${assignment.name}</strong></div>
+      <div><label>Custom Edit Grade Value</label><input id="gradeEditValue" type="text" value="${entry.score}" placeholder="blank or number" /></div>
+      <div><label>Flag</label><select id="gradeEditFlag"><option value="">No Flag</option>${FLAGS.map((flag) => `<option value="${flag}" ${entry.flag === flag ? 'selected' : ''}>${flag}</option>`).join('')}</select></div>
+      <div><button class="toolbar-btn" type="submit">Save Grade</button></div>
+    </form>
+  `;
+
+  document.getElementById('gradeEditForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    const value = document.getElementById('gradeEditValue').value.trim();
+    const flag = document.getElementById('gradeEditFlag').value;
+    const next = normalizeGradeEntry(state.grades[gradeEditorKey]);
+    next.score = value === '' || value.toLowerCase() === 'blank' ? '' : Math.max(0, Math.min(state.settings.maxOverallGrade, Number(value)));
+    next.flag = flag;
+    state.grades[gradeEditorKey] = next;
+    saveState();
+    closeOverlay();
+    renderSection('Grade Book');
+  });
+}
+
 function overlayAssignments(editId = null) {
   const categories = state.categories.map((item) => `<option value="${item.id}">${item.name}</option>`).join('');
   const editItem = editId ? assignmentById(editId) : null;
 
-  const rows = assignmentsForClass().map((item, idx) => `
+  const rows = assignmentsForClass(state.currentClassId, 'oldest').map((item, idx) => `
     <tr>
       <td>${idx + 1}</td>
       <td>${item.name}</td>
@@ -651,10 +720,7 @@ function overlayAssignments(editId = null) {
       <td>${item.points}</td>
       <td>${Number(item.multiplier).toFixed(2)}</td>
       <td>${item.notSetTotal ? 'Not Set' : 'Set'}</td>
-      <td>
-        <button class="toolbar-btn" data-edit-assignment="${item.id}" type="button">Edit</button>
-        <button class="danger-btn" data-delete-assignment="${item.id}" type="button">Delete</button>
-      </td>
+      <td><button class="toolbar-btn" data-edit-assignment="${item.id}" type="button">Edit</button> <button class="danger-btn" data-delete-assignment="${item.id}" type="button">Delete</button></td>
     </tr>
   `).join('');
 
@@ -663,9 +729,9 @@ function overlayAssignments(editId = null) {
       <input id="assignmentEditId" type="hidden" value="${editItem?.id || ''}" />
       <div><label>Assignment Name</label><input id="assignmentName" value="${editItem?.name || ''}" required /></div>
       <div><label>Category</label><select id="assignmentCategory">${categories}</select></div>
-      <div><label>Start Date (today)</label><input id="assignmentStart" type="date" value="${editItem?.startDate || today}" /></div>
-      <div><label>Due Date (today)</label><input id="assignmentDue" type="date" value="${editItem?.dueDate || today}" /></div>
-      <div><label>Total Points (100)</label><input id="assignmentPoints" type="number" value="${editItem?.points ?? 100}" /></div>
+      <div><label>Start Date</label><input id="assignmentStart" type="date" value="${editItem?.startDate || today}" /></div>
+      <div><label>Due Date</label><input id="assignmentDue" type="date" value="${editItem?.dueDate || today}" /></div>
+      <div><label>Total Points</label><input id="assignmentPoints" type="number" value="${editItem?.points ?? 100}" /></div>
       <div><label>Multiplier</label><input id="assignmentMultiplier" type="number" step="0.01" value="${editItem?.multiplier ?? 1}" /></div>
       <div><label>Not Set total points</label><label class="control-row"><input id="assignmentNotSetTotal" type="checkbox" class="sharp-checkbox" ${editItem?.notSetTotal ? 'checked' : ''}/> enable</label></div>
       <div class="full-span"><label>Description</label><textarea id="assignmentDescription">${editItem?.description || ''}</textarea></div>
@@ -707,7 +773,6 @@ function overlayAssignments(editId = null) {
   overlayBody.querySelectorAll('[data-edit-assignment]').forEach((button) => {
     button.addEventListener('click', () => openOverlay('assignments', button.dataset.editAssignment));
   });
-
   overlayBody.querySelectorAll('[data-delete-assignment]').forEach((button) => {
     button.addEventListener('click', () => {
       const id = button.dataset.deleteAssignment;
@@ -734,9 +799,7 @@ function overlayCategories(editId = null) {
       <div><label>Weight</label><input id="categoryWeight" type="number" min="0" max="100" value="${editItem?.weight ?? ''}" required /></div>
       <div><button class="toolbar-btn" type="submit">${editItem ? 'Save Category' : 'Add Category'}</button></div>
     </form>
-    <div id="categoryList" class="drag-list">
-      ${state.categories.map((item) => `<div class="drag-item" draggable="true" data-cat-id="${item.id}"><span>${item.name} (${item.weight}%)</span><span><button class="toolbar-btn" data-edit-cat="${item.id}" type="button">Edit</button> <button class="danger-btn" data-del-cat="${item.id}" type="button">Delete</button></span></div>`).join('')}
-    </div>
+    <div id="categoryList" class="drag-list">${state.categories.map((item) => `<div class="drag-item" draggable="true" data-cat-id="${item.id}"><span>${item.name} (${item.weight}%)</span><span><button class="toolbar-btn" data-edit-cat="${item.id}" type="button">Edit</button> <button class="danger-btn" data-del-cat="${item.id}" type="button">Delete</button></span></div>`).join('')}</div>
   `;
 
   document.getElementById('categoryForm').addEventListener('submit', (event) => {
@@ -746,8 +809,8 @@ function overlayCategories(editId = null) {
     const weight = Number(document.getElementById('categoryWeight').value);
     if (!name) return;
     if (id) {
-      const index = state.categories.findIndex((item) => item.id === id);
-      if (index >= 0) state.categories[index] = { ...state.categories[index], name, weight };
+      const idx = state.categories.findIndex((item) => item.id === id);
+      if (idx >= 0) state.categories[idx] = { ...state.categories[idx], name, weight };
     } else {
       state.categories.push({ id: uid('cat'), name, weight });
     }
@@ -787,9 +850,7 @@ function overlayStudents(editId = null) {
       <div><button class="toolbar-btn" type="submit">${editItem ? 'Save Student' : 'Add Student'}</button></div>
       <div class="full-span"><label>Quick Fill (First, Last, Code per line)</label><textarea id="studentQuick"></textarea><button id="studentQuickBtn" type="button" class="toolbar-btn">Quick Fill Add</button></div>
     </form>
-    <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>First</th><th>Last</th><th>Code</th><th>Actions</th></tr></thead><tbody>
-      ${studentsForClass().map((item, idx) => `<tr><td>${idx + 1}</td><td>${item.firstName}</td><td>${item.lastName}</td><td>${item.code}</td><td><button class="toolbar-btn" data-edit-stu="${item.id}" type="button">Edit</button> <button class="danger-btn" data-del-stu="${item.id}" type="button">Delete</button></td></tr>`).join('') || '<tr><td colspan="5">No students.</td></tr>'}
-    </tbody></table></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>First</th><th>Last</th><th>Code</th><th>Actions</th></tr></thead><tbody>${studentsForClass().map((item, idx) => `<tr><td>${idx + 1}</td><td>${item.firstName}</td><td>${item.lastName}</td><td>${item.code}</td><td><button class="toolbar-btn" data-edit-stu="${item.id}" type="button">Edit</button> <button class="danger-btn" data-del-stu="${item.id}" type="button">Delete</button></td></tr>`).join('') || '<tr><td colspan="5">No students.</td></tr>'}</tbody></table></div>
   `;
 
   document.getElementById('studentForm').addEventListener('submit', (event) => {
@@ -801,8 +862,8 @@ function overlayStudents(editId = null) {
     if (!first || !last) return;
 
     if (id) {
-      const index = state.students.findIndex((item) => item.id === id);
-      if (index >= 0) state.students[index] = { ...state.students[index], firstName: first, lastName: last, code };
+      const idx = state.students.findIndex((item) => item.id === id);
+      if (idx >= 0) state.students[idx] = { ...state.students[idx], firstName: first, lastName: last, code };
     } else {
       const student = { id: uid('stu'), firstName: first, lastName: last, code, classId: state.currentClassId };
       state.students.push(student);
@@ -830,7 +891,6 @@ function overlayStudents(editId = null) {
   overlayBody.querySelectorAll('[data-edit-stu]').forEach((button) => {
     button.addEventListener('click', () => openOverlay('students', button.dataset.editStu));
   });
-
   overlayBody.querySelectorAll('[data-del-stu]').forEach((button) => {
     button.addEventListener('click', () => {
       const id = button.dataset.delStu;
@@ -860,9 +920,7 @@ function overlayClasses(editId = null) {
       <div><label>Teacher</label><input id="classTeacher" value="${editItem?.teacher || ''}" /></div>
       <div><button class="toolbar-btn" type="submit">${editItem ? 'Save Class' : 'Add Class'}</button></div>
     </form>
-    <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Class</th><th>Grade</th><th>Room</th><th>Teacher</th><th>Students</th><th>Actions</th></tr></thead><tbody>
-      ${state.classes.map((item, idx) => `<tr><td>${idx + 1}</td><td>${item.name}</td><td>${item.gradeLevel}</td><td>${item.room}</td><td>${item.teacher}</td><td>${studentsForClass(item.id).length}</td><td><button class="toolbar-btn" data-edit-class-row="${item.id}" type="button">Edit</button> <button class="danger-btn" data-del-class-row="${item.id}" type="button">Delete</button></td></tr>`).join('')}
-    </tbody></table></div>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Class</th><th>Grade</th><th>Room</th><th>Teacher</th><th>Students</th><th>Actions</th></tr></thead><tbody>${state.classes.map((item, idx) => `<tr><td>${idx + 1}</td><td>${item.name}</td><td>${item.gradeLevel}</td><td>${item.room}</td><td>${item.teacher}</td><td>${studentsForClass(item.id).length}</td><td><button class="toolbar-btn" data-edit-class-row="${item.id}" type="button">Edit</button> <button class="danger-btn" data-del-class-row="${item.id}" type="button">Delete</button></td></tr>`).join('')}</tbody></table></div>
   `;
 
   document.getElementById('classForm').addEventListener('submit', (event) => {
@@ -877,8 +935,8 @@ function overlayClasses(editId = null) {
     if (!payload.name || !payload.gradeLevel) return;
 
     if (id) {
-      const index = state.classes.findIndex((item) => item.id === id);
-      if (index >= 0) state.classes[index] = { ...state.classes[index], ...payload };
+      const idx = state.classes.findIndex((item) => item.id === id);
+      if (idx >= 0) state.classes[idx] = { ...state.classes[idx], ...payload };
     } else {
       const cls = { id: uid('cls'), ...payload };
       state.classes.push(cls);
@@ -893,7 +951,6 @@ function overlayClasses(editId = null) {
   overlayBody.querySelectorAll('[data-edit-class-row]').forEach((button) => {
     button.addEventListener('click', () => openOverlay('classes', button.dataset.editClassRow));
   });
-
   overlayBody.querySelectorAll('[data-del-class-row]').forEach((button) => {
     button.addEventListener('click', () => {
       const id = button.dataset.delClassRow;
@@ -915,34 +972,33 @@ function overlayClasses(editId = null) {
 
 function overlayBulkMass() {
   overlayBody.innerHTML = `
-    <form id="bulkMassForm" class="form-grid">
+    <form id="bulkForm" class="form-grid">
       <div><label>Min Grade</label><input id="bulkMin" type="number" value="60" /></div>
       <div><label>Max Grade</label><input id="bulkMax" type="number" value="95" /></div>
       <div><label>Difficulty</label><select id="bulkDifficulty"><option>very easy</option><option>easy</option><option selected>medium</option><option>hard</option><option>very hard</option></select></div>
-      <div><label>Set all grades to</label><input id="bulkSetValue" type="text" placeholder="blank or number" /></div>
+      <div><label>Set all grades to</label><input id="bulkSet" type="text" placeholder="blank or number" /></div>
       <div class="full-span action-row">
-        <label><input type="checkbox" id="replaceBlankOnly" class="sharp-checkbox" /> Replace blank grades only</label>
-        <label><input type="checkbox" id="replaceExistingOnly" class="sharp-checkbox" /> Replace existing grades only</label>
-        <label><input type="checkbox" id="replaceAll" class="sharp-checkbox" checked /> Replace all grades</label>
+        <label><input id="replaceBlankOnly" type="checkbox" class="sharp-checkbox" /> Replace blank grades only</label>
+        <label><input id="replaceExistingOnly" type="checkbox" class="sharp-checkbox" /> Replace existing grades only</label>
+        <label><input id="replaceAll" type="checkbox" class="sharp-checkbox" checked /> Replace all grades</label>
       </div>
       <div><button class="toolbar-btn" type="submit">Apply Bulk Mass Grade</button></div>
     </form>
   `;
 
-  document.getElementById('bulkMassForm').addEventListener('submit', (event) => {
+  document.getElementById('bulkForm').addEventListener('submit', (event) => {
     event.preventDefault();
     const min = Number(document.getElementById('bulkMin').value || 0);
     const max = Number(document.getElementById('bulkMax').value || 100);
     const difficulty = document.getElementById('bulkDifficulty').value;
-    const setValue = document.getElementById('bulkSetValue').value.trim();
+    const setValue = document.getElementById('bulkSet').value.trim();
     const replaceBlankOnly = document.getElementById('replaceBlankOnly').checked;
     const replaceExistingOnly = document.getElementById('replaceExistingOnly').checked;
 
-    const difficultyMap = { 'very easy': 0.95, easy: 0.88, medium: 0.75, hard: 0.62, 'very hard': 0.5 };
-    const bias = difficultyMap[difficulty] || 0.75;
+    const ratio = { 'very easy': 0.95, easy: 0.88, medium: 0.75, hard: 0.62, 'very hard': 0.5 }[difficulty] || 0.75;
 
     studentsForClass().forEach((student) => {
-      assignmentsForClass().forEach((assignment) => {
+      assignmentsForClass(state.currentClassId, 'oldest').forEach((assignment) => {
         const key = `${student.id}|${assignment.id}`;
         const entry = normalizeGradeEntry(state.grades[key]);
         const isBlank = entry.score === '' || entry.score === null || entry.score === undefined;
@@ -954,8 +1010,7 @@ function overlayBulkMass() {
         } else if (setValue !== '') {
           entry.score = Math.max(0, Math.min(state.settings.maxOverallGrade, Number(setValue)));
         } else {
-          const roll = Math.round(min + (max - min) * (0.25 + 0.75 * Math.random()) * bias);
-          entry.score = Math.max(0, Math.min(state.settings.maxOverallGrade, roll));
+          entry.score = Math.round(min + (max - min) * ratio * (0.4 + Math.random() * 0.6));
         }
         state.grades[key] = entry;
       });
@@ -971,8 +1026,8 @@ function overlaySettings() {
   overlayBody.innerHTML = `
     <form id="settingsForm" class="form-grid">
       <div><label>Max Overall Grade</label><input id="maxOverallGrade" type="number" value="${state.settings.maxOverallGrade}" /></div>
-      <div class="full-span"><strong>TERMS</strong><div class="action-row">${['T1', 'T2', 'T3', 'T4'].map((term) => `<label><input data-term="${term}" class="sharp-checkbox" type="checkbox" ${state.settings.terms[term] ? 'checked' : ''} /> ${term}</label>`).join('')}</div></div>
-      <div class="full-span"><strong>SEMESTER</strong><div class="action-row">${['S1', 'S2', 'S3', 'S4'].map((sem) => `<label><input data-sem="${sem}" class="sharp-checkbox" type="checkbox" ${state.settings.semesters[sem] ? 'checked' : ''} /> ${sem}</label>`).join('')}</div></div>
+      <div class="full-span"><strong>TERMS</strong><div class="action-row">${['T1', 'T2', 'T3', 'T4'].map((term) => `<label><input class="sharp-checkbox" data-term="${term}" type="checkbox" ${state.settings.terms[term] ? 'checked' : ''}/> ${term}</label>`).join('')}</div></div>
+      <div class="full-span"><strong>SEMESTER</strong><div class="action-row">${['S1', 'S2', 'S3', 'S4'].map((sem) => `<label><input class="sharp-checkbox" data-sem="${sem}" type="checkbox" ${state.settings.semesters[sem] ? 'checked' : ''}/> ${sem}</label>`).join('')}</div></div>
       <div><button class="toolbar-btn" type="submit">Save Settings</button></div>
     </form>
   `;
@@ -981,12 +1036,10 @@ function overlaySettings() {
     event.preventDefault();
     state.settings.maxOverallGrade = Number(document.getElementById('maxOverallGrade').value || 100);
     ['T1', 'T2', 'T3', 'T4'].forEach((term) => {
-      const input = overlayBody.querySelector(`[data-term="${term}"]`);
-      state.settings.terms[term] = input.checked;
+      state.settings.terms[term] = overlayBody.querySelector(`[data-term="${term}"]`).checked;
     });
     ['S1', 'S2', 'S3', 'S4'].forEach((sem) => {
-      const input = overlayBody.querySelector(`[data-sem="${sem}"]`);
-      state.settings.semesters[sem] = input.checked;
+      state.settings.semesters[sem] = overlayBody.querySelector(`[data-sem="${sem}"]`).checked;
     });
     saveState();
     closeOverlay();
@@ -997,6 +1050,7 @@ function overlaySettings() {
 function setupCategoryDragDrop() {
   const items = overlayBody.querySelectorAll('.drag-item[data-cat-id]');
   let dragged = null;
+
   items.forEach((item) => {
     item.addEventListener('dragstart', () => {
       dragged = item.dataset.catId;
@@ -1027,12 +1081,10 @@ showSignUpBtn.addEventListener('click', () => {
   signInForm.parentElement.classList.add('hidden');
   signUpCard.classList.remove('hidden');
 });
-
 backToSignInBtn.addEventListener('click', () => {
   signUpCard.classList.add('hidden');
   signInForm.parentElement.classList.remove('hidden');
 });
-
 signupPassword.addEventListener('input', () => {
   passwordStrength.textContent = `Password Strength: ${passwordScore(signupPassword.value)}%`;
 });
@@ -1121,11 +1173,12 @@ document.querySelectorAll('.dock-btn').forEach((button) => {
   });
 });
 
-assignmentMenu.querySelectorAll('button[data-menu-action]').forEach((button) => {
+assignmentMenu.querySelectorAll('[data-menu-action]').forEach((button) => {
   button.addEventListener('click', () => {
     const action = button.dataset.menuAction;
     assignmentMenu.classList.add('hidden');
     if (!assignmentMenuTargetId) return;
+
     if (action === 'edit') openOverlay('assignments', assignmentMenuTargetId);
     if (action === 'delete') {
       const assignment = assignmentById(assignmentMenuTargetId);
@@ -1148,8 +1201,6 @@ document.addEventListener('click', (event) => {
   if (!event.target.closest('#assignmentMenu')) assignmentMenu.classList.add('hidden');
 });
 
-window.addEventListener('resize', () => {
-  assignmentMenu.classList.add('hidden');
-});
+window.addEventListener('resize', () => assignmentMenu.classList.add('hidden'));
 
 saveState();
