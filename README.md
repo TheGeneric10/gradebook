@@ -1,28 +1,22 @@
-# Gradebook v0.2.1a
+# Gradebook v0.3.0
 
 Front-end prototype modeled after an Infinite Campus-style teacher dashboard.
 
 ## What changed
 
-- Dashboard now uses a full-viewport layout with margins removed so Gradebook content reaches the screen edges (auth screens remain centered).
-- Centered application shell with Arial Regular body text and Arial Bold headings.
-- Updated color system using: `#282d30`, `#e1e1e1`, `#ffffff`, `#f4f4f4`, `#0dabd8`, `#9f9f9f`, and `#93c93c`.
-- Functional sign-in and sign-up (Create Account) simulation.
-- Dashboard taskbar with left hamburger and right-side Google Material filled icons (help, notifications, account).
-- Sidebar navigation sections with working interactions:
+- Added focused 0.3.0 navigation with only these sections:
   - Control Center
   - Grade Book
-  - Planner
-  - Message Center
-  - Discussions
-  - Learning Tools
-  - Progress Monitor
   - Attendance
   - Roster
   - Seating Charts
   - Student Groups
   - Post Grades
-- Sharp-styled custom checkbox, radio buttons, and switch toggle.
+- Implemented custom section rendering so every section has a unique layout and content.
+- Updated Control Center to list classes as dedicated cards.
+- Added a Grade Book screen with setup, student list, and posted score columns.
+- Added an Attendance screen with AM/PM controls and a grid-like attendance table format.
+- Implemented dark dropdown menus for Help, Notifications, and Account; Account includes a working Sign out action.
 
 ## Run
 

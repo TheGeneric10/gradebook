@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gradebook 0.2.1a</title>
+  <title>Gradebook 0.3.0</title>
   <link rel="stylesheet" href="public/css/style.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
 </head>
@@ -61,16 +61,40 @@
           </button>
           <strong>Gradebook</strong>
         </div>
+
         <div class="taskbar-right">
-          <button class="icon-btn" id="helpBtn" aria-label="Help">
-            <span class="material-icons">help</span>
-          </button>
-          <button class="icon-btn" id="notifyBtn" aria-label="Notifications">
-            <span class="material-icons">notifications</span>
-          </button>
-          <button class="icon-btn" id="accountBtn" aria-label="Account">
-            <span class="material-icons">account_circle</span>
-          </button>
+          <div class="dropdown-wrap">
+            <button class="icon-btn" id="helpBtn" aria-label="Help">
+              <span class="material-icons">help</span>
+            </button>
+            <div id="helpDropdown" class="dark-dropdown hidden" role="menu" aria-label="Help menu">
+              <button class="dropdown-item" data-action="Support Center">Support Center</button>
+              <button class="dropdown-item" data-action="Guides">Guides</button>
+              <button class="dropdown-item" data-action="Keyboard Shortcuts">Keyboard Shortcuts</button>
+            </div>
+          </div>
+
+          <div class="dropdown-wrap">
+            <button class="icon-btn" id="notifyBtn" aria-label="Notifications">
+              <span class="material-icons">notifications</span>
+            </button>
+            <div id="notifyDropdown" class="dark-dropdown hidden" role="menu" aria-label="Notifications menu">
+              <button class="dropdown-item" data-action="3 new grade alerts">3 new grade alerts</button>
+              <button class="dropdown-item" data-action="2 attendance updates">2 attendance updates</button>
+              <button class="dropdown-item" data-action="1 roster change">1 roster change</button>
+            </div>
+          </div>
+
+          <div class="dropdown-wrap">
+            <button class="icon-btn" id="accountBtn" aria-label="Account">
+              <span class="material-icons">account_circle</span>
+            </button>
+            <div id="accountDropdown" class="dark-dropdown hidden" role="menu" aria-label="Account menu">
+              <button class="dropdown-item" data-action="Profile">Profile</button>
+              <button class="dropdown-item" data-action="Preferences">Preferences</button>
+              <button class="dropdown-item" id="signOutBtn" data-action="Sign out">Sign out</button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -80,11 +104,6 @@
           <nav>
             <button class="nav-item active" data-section="Control Center">Control Center</button>
             <button class="nav-item" data-section="Grade Book">Grade Book</button>
-            <button class="nav-item" data-section="Planner">Planner</button>
-            <button class="nav-item" data-section="Message Center">Message Center</button>
-            <button class="nav-item" data-section="Discussions">Discussions</button>
-            <button class="nav-item" data-section="Learning Tools">Learning Tools</button>
-            <button class="nav-item" data-section="Progress Monitor">Progress Monitor</button>
             <button class="nav-item" data-section="Attendance">Attendance</button>
             <button class="nav-item" data-section="Roster">Roster</button>
             <button class="nav-item" data-section="Seating Charts">Seating Charts</button>
@@ -95,20 +114,7 @@
 
         <main class="content-panel">
           <h2 id="sectionTitle">Control Center</h2>
-
-          <div class="filter-bar">
-            <div class="radio-group">
-              <label><input class="sharp-radio" type="radio" name="period" value="AM" checked /> Period AM</label>
-              <label><input class="sharp-radio" type="radio" name="period" value="PM" /> Period PM</label>
-            </div>
-            <label class="switch-wrap">
-              <input type="checkbox" id="showMissing" />
-              <span class="sharp-switch"></span>
-              Show missing only
-            </label>
-          </div>
-
-          <section id="sectionContent" class="cards-grid" aria-live="polite"></section>
+          <section id="sectionContent" aria-live="polite"></section>
           <p id="dashboardStatus" class="status-line"></p>
         </main>
       </div>

@@ -23,7 +23,8 @@ body {
 
 h1,
 h2,
-strong {
+strong,
+th {
   font-family: Arial, Helvetica, sans-serif;
   font-weight: 700;
 }
@@ -121,10 +122,6 @@ input[type='password'] {
   background: #fff;
 }
 
-.sharp-radio {
-  border-radius: 0;
-}
-
 .sharp-checkbox::before,
 .sharp-radio::before {
   content: '';
@@ -178,6 +175,35 @@ input[type='password'] {
   background: rgba(255, 255, 255, 0.25);
 }
 
+.dropdown-wrap {
+  position: relative;
+}
+
+.dark-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 200px;
+  border: 1px solid #131516;
+  background: #202427;
+  z-index: 20;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.dropdown-item {
+  width: 100%;
+  border: 0;
+  text-align: left;
+  padding: 10px 12px;
+  color: #f6f8f9;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: #2f373c;
+}
+
 .main-layout {
   display: grid;
   grid-template-columns: 250px 1fr;
@@ -192,7 +218,7 @@ input[type='password'] {
 
 .sidebar-heading {
   height: 48px;
-  padding: 14px 14px;
+  padding: 14px;
   border-bottom: 1px solid #3a4146;
   font-weight: 700;
 }
@@ -204,7 +230,7 @@ input[type='password'] {
   border-left: 3px solid transparent;
   background: transparent;
   color: #cfd6db;
-  padding: 10px 12px;
+  padding: 11px 12px;
   cursor: pointer;
   font-size: 0.9rem;
 }
@@ -217,91 +243,138 @@ input[type='password'] {
 }
 
 .content-panel {
-  padding: 16px;
+  padding: 14px;
   background: var(--gray-200);
 }
 
-.filter-bar {
+.panel {
   background: var(--white);
-  border: 1px solid #d4d4d4;
+  border: 1px solid #d1d1d1;
   padding: 10px;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
 }
 
-.radio-group {
-  display: flex;
-  gap: 14px;
+.class-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
 }
 
-.radio-group label,
-.switch-wrap {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 400;
-}
-
-.switch-wrap input {
-  position: absolute;
-  opacity: 0;
-}
-
-.sharp-switch {
-  width: 36px;
-  height: 18px;
-  border: 2px solid #707980;
+.class-card {
+  border: 1px solid #d3d3d3;
   background: #fff;
-  position: relative;
-  border-radius: 0;
+  padding: 10px;
 }
 
-.sharp-switch::after {
-  content: '';
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  top: 1px;
-  left: 1px;
-  background: #707980;
-  transition: transform 0.15s ease;
+.class-card h3,
+.simple-grid h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
 }
 
-.switch-wrap input:checked + .sharp-switch {
-  border-color: var(--cyan);
-}
-
-.switch-wrap input:checked + .sharp-switch::after {
-  background: var(--cyan);
-  transform: translateX(16px);
-}
-
-.cards-grid {
-  margin-top: 14px;
+.simple-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 10px;
 }
 
-.info-card {
-  border: 1px solid #d3d3d3;
-  background: var(--white);
-  padding: 10px;
-  min-height: 95px;
+.table-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
 }
 
-.info-card h3 {
-  margin: 0 0 8px;
-  font-size: 1rem;
+.select-small,
+.toolbar-btn {
+  border: 1px solid #bfc4c8;
+  background: #fff;
+  border-radius: 0;
+  padding: 4px 6px;
+  height: 28px;
 }
 
-.info-card p {
-  margin: 0;
-  color: var(--gray-500);
-  font-size: 0.85rem;
+.toolbar-btn {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.gradebook-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr 210px;
+  border: 1px solid #b9c7cf;
+}
+
+.gradebook-col {
+  border-right: 1px solid #b9c7cf;
+}
+
+.gradebook-col:last-child {
+  border-right: 0;
+}
+
+.col-head {
+  background: var(--cyan);
+  color: white;
+  font-weight: 700;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+}
+
+.student-row,
+.score-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  border-top: 1px solid #e0e0e0;
+  min-height: 28px;
+  align-items: center;
+}
+
+.student-row span,
+.score-row span {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}
+
+.score-row {
+  grid-template-columns: 1fr 1fr;
+}
+
+.attendance-header {
+  background: #5f5f5f;
+  color: #fff;
+  padding: 8px 10px;
+  font-weight: 700;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border: 1px solid #bcbcbc;
+}
+
+.attendance-table th,
+.attendance-table td {
+  border: 1px solid #d2d2d2;
+  padding: 4px 6px;
+  font-size: 0.78rem;
+}
+
+.attendance-table th {
+  background: #ececec;
+  text-align: left;
+}
+
+.attendance-p {
+  background: #0dabd8;
+  color: #fff;
+  text-align: center;
+  font-weight: 700;
+}
+
+.attendance-mark {
+  text-align: center;
 }
 
 .status-line {
@@ -311,13 +384,28 @@ input[type='password'] {
   font-size: 0.9rem;
 }
 
+@media (max-width: 1100px) {
+  .gradebook-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .gradebook-col {
+    border-right: 0;
+    border-bottom: 1px solid #b9c7cf;
+  }
+
+  .gradebook-col:last-child {
+    border-bottom: 0;
+  }
+}
+
 @media (max-width: 850px) {
   .main-layout {
     grid-template-columns: 1fr;
   }
 
   .sidebar {
-    max-height: 270px;
+    max-height: 260px;
     overflow: auto;
   }
 }
