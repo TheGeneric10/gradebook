@@ -3,73 +3,117 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gradebook | Sign In</title>
-  <link href="public/css/style.css" rel="stylesheet" />
+  <title>Gradebook 0.2.1a</title>
+  <link rel="stylesheet" href="public/css/style.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
 </head>
 <body>
-  <main class="page-shell">
-    <header class="brand-bar" aria-label="Brand header">
-      <div class="brand-text">Gradebook</div>
-      <div class="brand-tag">Campus Student</div>
-    </header>
-
-    <section class="auth-layout" aria-live="polite">
-      <section class="panel sign-in-panel" id="signInView">
-        <h1>Navigator Schools</h1>
-
-        <button class="sso-btn" type="button">Single Sign-On (SSO)</button>
-
-        <div class="or-divider" aria-hidden="true">
-          <span>or</span>
-        </div>
+  <div class="app-root">
+    <section class="auth-wrapper" id="authView">
+      <div class="auth-card">
+        <h1>Gradebook</h1>
+        <p class="auth-subtitle">Sign in to continue</p>
 
         <form id="signInForm" novalidate>
           <label for="signin-username">Student Username</label>
-          <input id="signin-username" name="username" type="text" autocomplete="username" required />
+          <input id="signin-username" type="text" required autocomplete="username" />
 
           <label for="signin-password">Password</label>
-          <input id="signin-password" name="password" type="password" autocomplete="current-password" required />
+          <input id="signin-password" type="password" required autocomplete="current-password" />
 
-          <label class="stay-signed-in">
-            <input id="staySignedIn" type="checkbox" />
+          <label class="control-row">
+            <input type="checkbox" id="staySignedIn" class="sharp-checkbox" />
             <span>Stay logged in</span>
           </label>
 
-          <button class="primary-btn" type="submit">Log In</button>
+          <button type="submit" class="primary-btn">Log In</button>
+          <button type="button" id="showSignUp" class="link-btn">Create Account</button>
         </form>
+      </div>
 
-        <button id="toSignUp" class="link-btn" type="button">Create Account</button>
-      </section>
-
-      <section class="panel announcements-panel" id="announcementsPanel" aria-label="Announcements">
-        <h2>Announcements</h2>
-        <div class="announcement-box" id="announcementText">There are no district announcements.</div>
-      </section>
-
-      <section class="panel sign-up-panel hidden" id="signUpView">
-        <h2>Create Gradebook Account</h2>
-        <p class="welcome-line">Welcome! Create Account to start using Gradebook.</p>
+      <div class="auth-card hidden" id="signUpCard">
+        <h2>Create Account</h2>
+        <p class="auth-subtitle">Create your Gradebook account</p>
 
         <form id="signUpForm" novalidate>
-          <label for="signup-username">Username <span aria-hidden="true">*</span></label>
-          <input id="signup-username" name="username" type="text" autocomplete="username" required />
+          <label for="signup-username">Username</label>
+          <input id="signup-username" type="text" required autocomplete="username" />
 
-          <label for="signup-password">Password <span aria-hidden="true">*</span></label>
-          <input id="signup-password" name="password" type="password" autocomplete="new-password" required minlength="8" />
+          <label for="signup-password">Password</label>
+          <input id="signup-password" type="password" required autocomplete="new-password" />
 
-          <label for="signup-confirm-password">Confirm Password <span aria-hidden="true">*</span></label>
-          <input id="signup-confirm-password" name="confirm-password" type="password" autocomplete="new-password" required />
+          <label for="signup-confirm">Confirm Password</label>
+          <input id="signup-confirm" type="password" required autocomplete="new-password" />
 
-          <p class="password-strength" id="passwordStrength">Password Strength: 0%</p>
+          <p id="passwordStrength" class="small-note">Password Strength: 0%</p>
 
-          <button class="primary-btn" type="submit">Create Account</button>
-          <button id="backToSignIn" class="link-btn" type="button">Back to Login</button>
+          <button type="submit" class="primary-btn">Create Account</button>
+          <button type="button" id="backToSignIn" class="link-btn">Back to Login</button>
         </form>
-      </section>
+      </div>
     </section>
 
-    <p class="status-message" id="statusMessage" role="status"></p>
-  </main>
+    <section class="dashboard hidden" id="dashboardView">
+      <header class="taskbar">
+        <div class="taskbar-left">
+          <button class="icon-btn" id="toggleSidebar" aria-label="Toggle sidebar">
+            <span class="material-icons">menu</span>
+          </button>
+          <strong>Gradebook</strong>
+        </div>
+        <div class="taskbar-right">
+          <button class="icon-btn" id="helpBtn" aria-label="Help">
+            <span class="material-icons">help</span>
+          </button>
+          <button class="icon-btn" id="notifyBtn" aria-label="Notifications">
+            <span class="material-icons">notifications</span>
+          </button>
+          <button class="icon-btn" id="accountBtn" aria-label="Account">
+            <span class="material-icons">account_circle</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="main-layout">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-heading">Instruction</div>
+          <nav>
+            <button class="nav-item active" data-section="Control Center">Control Center</button>
+            <button class="nav-item" data-section="Grade Book">Grade Book</button>
+            <button class="nav-item" data-section="Planner">Planner</button>
+            <button class="nav-item" data-section="Message Center">Message Center</button>
+            <button class="nav-item" data-section="Discussions">Discussions</button>
+            <button class="nav-item" data-section="Learning Tools">Learning Tools</button>
+            <button class="nav-item" data-section="Progress Monitor">Progress Monitor</button>
+            <button class="nav-item" data-section="Attendance">Attendance</button>
+            <button class="nav-item" data-section="Roster">Roster</button>
+            <button class="nav-item" data-section="Seating Charts">Seating Charts</button>
+            <button class="nav-item" data-section="Student Groups">Student Groups</button>
+            <button class="nav-item" data-section="Post Grades">Post Grades</button>
+          </nav>
+        </aside>
+
+        <main class="content-panel">
+          <h2 id="sectionTitle">Control Center</h2>
+
+          <div class="filter-bar">
+            <div class="radio-group">
+              <label><input class="sharp-radio" type="radio" name="period" value="AM" checked /> Period AM</label>
+              <label><input class="sharp-radio" type="radio" name="period" value="PM" /> Period PM</label>
+            </div>
+            <label class="switch-wrap">
+              <input type="checkbox" id="showMissing" />
+              <span class="sharp-switch"></span>
+              Show missing only
+            </label>
+          </div>
+
+          <section id="sectionContent" class="cards-grid" aria-live="polite"></section>
+          <p id="dashboardStatus" class="status-line"></p>
+        </main>
+      </div>
+    </section>
+  </div>
 
   <script defer src="public/js/main.js"></script>
 </body>

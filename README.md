@@ -1,18 +1,30 @@
-# Gradebook v0.1.0
+# Gradebook v0.2.1a
 
-A lightweight front-end prototype for a Gradebook authentication experience.
+Front-end prototype modeled after an Infinite Campus-style teacher dashboard.
 
-## Features
+## What changed
 
-- Infinite Campus-inspired **Sign In** layout branded as Gradebook.
-- Green background theme (`#93c93c`) and school portal styling.
-- Simulated **Sign In** form validation and success messaging.
-- Simulated **Create Account** sign-up page with password strength indicator.
-- Navigation between Sign In and Sign Up views.
+- Dashboard now uses a full-viewport layout with margins removed so Gradebook content reaches the screen edges (auth screens remain centered).
+- Centered application shell with Arial Regular body text and Arial Bold headings.
+- Updated color system using: `#282d30`, `#e1e1e1`, `#ffffff`, `#f4f4f4`, `#0dabd8`, `#9f9f9f`, and `#93c93c`.
+- Functional sign-in and sign-up (Create Account) simulation.
+- Dashboard taskbar with left hamburger and right-side Google Material filled icons (help, notifications, account).
+- Sidebar navigation sections with working interactions:
+  - Control Center
+  - Grade Book
+  - Planner
+  - Message Center
+  - Discussions
+  - Learning Tools
+  - Progress Monitor
+  - Attendance
+  - Roster
+  - Seating Charts
+  - Student Groups
+  - Post Grades
+- Sharp-styled custom checkbox, radio buttons, and switch toggle.
 
-## Run locally
-
-Because this is static HTML/CSS/JS, you can run any static server, for example:
+## Run
 
 ```bash
 python3 -m http.server 4173
