@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gradebook 0.5.0</title>
+  <title>Gradebook 0.6.0</title>
   <link rel="stylesheet" href="public/css/style.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
 </head>
@@ -13,19 +13,15 @@
       <div class="auth-card">
         <h1>Gradebook</h1>
         <p class="auth-subtitle">Sign in to continue</p>
-
         <form id="signInForm" novalidate>
           <label for="signin-username">Student Username</label>
           <input id="signin-username" type="text" required autocomplete="username" />
-
           <label for="signin-password">Password</label>
           <input id="signin-password" type="password" required autocomplete="current-password" />
-
           <label class="control-row">
             <input type="checkbox" id="staySignedIn" class="sharp-checkbox" />
             <span>Stay logged in</span>
           </label>
-
           <button type="submit" class="primary-btn">Log In</button>
           <button type="button" id="showSignUp" class="link-btn">Create Account</button>
         </form>
@@ -34,19 +30,14 @@
       <div class="auth-card hidden" id="signUpCard">
         <h2>Create Account</h2>
         <p class="auth-subtitle">Create your Gradebook account</p>
-
         <form id="signUpForm" novalidate>
           <label for="signup-username">Username</label>
           <input id="signup-username" type="text" required autocomplete="username" />
-
           <label for="signup-password">Password</label>
           <input id="signup-password" type="password" required autocomplete="new-password" />
-
           <label for="signup-confirm">Confirm Password</label>
           <input id="signup-confirm" type="password" required autocomplete="new-password" />
-
           <p id="passwordStrength" class="small-note">Password Strength: 0%</p>
-
           <button type="submit" class="primary-btn">Create Account</button>
           <button type="button" id="backToSignIn" class="link-btn">Back to Login</button>
         </form>
@@ -56,38 +47,31 @@
     <section class="dashboard hidden" id="dashboardView">
       <header class="taskbar">
         <div class="taskbar-left">
-          <button class="icon-btn" id="toggleSidebar" aria-label="Toggle sidebar">
-            <span class="material-icons">menu</span>
-          </button>
+          <button class="icon-btn" id="toggleSidebar" aria-label="Toggle sidebar"><span class="material-icons">menu</span></button>
           <strong>Gradebook</strong>
         </div>
 
         <div class="taskbar-right">
           <select id="classSelector" class="class-selector"></select>
-
           <div class="dropdown-wrap">
             <button class="icon-btn" id="helpBtn" aria-label="Help"><span class="material-icons">help</span></button>
-            <div id="helpDropdown" class="dark-dropdown hidden" role="menu" aria-label="Help menu">
+            <div id="helpDropdown" class="dark-dropdown hidden" role="menu">
               <button class="dropdown-item" data-action="Support Center">Support Center</button>
               <button class="dropdown-item" data-action="Guides">Guides</button>
               <button class="dropdown-item" data-action="Keyboard Shortcuts">Keyboard Shortcuts</button>
             </div>
           </div>
-
           <div class="dropdown-wrap">
             <button class="icon-btn" id="notifyBtn" aria-label="Notifications"><span class="material-icons">notifications</span></button>
-            <div id="notifyDropdown" class="dark-dropdown hidden" role="menu" aria-label="Notifications menu">
+            <div id="notifyDropdown" class="dark-dropdown hidden" role="menu">
               <button class="dropdown-item" data-action="3 new grade alerts">3 new grade alerts</button>
               <button class="dropdown-item" data-action="2 attendance updates">2 attendance updates</button>
-              <button class="dropdown-item" data-action="1 roster change">1 roster change</button>
             </div>
           </div>
-
           <div class="dropdown-wrap">
             <button class="icon-btn" id="accountBtn" aria-label="Account"><span class="material-icons">account_circle</span></button>
-            <div id="accountDropdown" class="dark-dropdown hidden" role="menu" aria-label="Account menu">
+            <div id="accountDropdown" class="dark-dropdown hidden" role="menu">
               <button class="dropdown-item" data-action="Profile">Profile</button>
-              <button class="dropdown-item" data-action="Preferences">Preferences</button>
               <button class="dropdown-item" id="signOutBtn" data-action="Sign out">Sign out</button>
             </div>
           </div>
@@ -135,6 +119,24 @@
       </div>
       <div id="overlayBody" class="overlay-body"></div>
     </div>
+  </div>
+
+  <div id="confirmOverlay" class="overlay hidden">
+    <div class="confirm-card">
+      <h3>Confirm Delete</h3>
+      <p id="confirmMessage">Are you sure?</p>
+      <div class="action-row">
+        <button id="confirmYesBtn" class="danger-btn" type="button">Delete</button>
+        <button id="confirmNoBtn" class="toolbar-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="assignmentMenu" class="mini-menu hidden">
+    <button data-menu-action="edit">Edit Assignment</button>
+    <button data-menu-action="delete">Delete Assignment</button>
+    <button data-menu-action="comments">Manage Student Comments</button>
+    <button data-menu-action="bulk">Bulk Mass Grade Change</button>
   </div>
 
   <script defer src="public/js/main.js"></script>
