@@ -3,12 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+  <title>Gradebook | Sign In</title>
+  <link href="public/css/style.css" rel="stylesheet" />
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+  <main class="page-shell">
+    <header class="brand-bar" aria-label="Brand header">
+      <div class="brand-text">Gradebook</div>
+      <div class="brand-tag">Campus Student</div>
+    </header>
+
+    <section class="auth-layout" aria-live="polite">
+      <section class="panel sign-in-panel" id="signInView">
+        <h1>Navigator Schools</h1>
+
+        <button class="sso-btn" type="button">Single Sign-On (SSO)</button>
+
+        <div class="or-divider" aria-hidden="true">
+          <span>or</span>
+        </div>
+
+        <form id="signInForm" novalidate>
+          <label for="signin-username">Student Username</label>
+          <input id="signin-username" name="username" type="text" autocomplete="username" required />
+
+          <label for="signin-password">Password</label>
+          <input id="signin-password" name="password" type="password" autocomplete="current-password" required />
+
+          <label class="stay-signed-in">
+            <input id="staySignedIn" type="checkbox" />
+            <span>Stay logged in</span>
+          </label>
+
+          <button class="primary-btn" type="submit">Log In</button>
+        </form>
+
+        <button id="toSignUp" class="link-btn" type="button">Create Account</button>
+      </section>
+
+      <section class="panel announcements-panel" id="announcementsPanel" aria-label="Announcements">
+        <h2>Announcements</h2>
+        <div class="announcement-box" id="announcementText">There are no district announcements.</div>
+      </section>
+
+      <section class="panel sign-up-panel hidden" id="signUpView">
+        <h2>Create Gradebook Account</h2>
+        <p class="welcome-line">Welcome! Create Account to start using Gradebook.</p>
+
+        <form id="signUpForm" novalidate>
+          <label for="signup-username">Username <span aria-hidden="true">*</span></label>
+          <input id="signup-username" name="username" type="text" autocomplete="username" required />
+
+          <label for="signup-password">Password <span aria-hidden="true">*</span></label>
+          <input id="signup-password" name="password" type="password" autocomplete="new-password" required minlength="8" />
+
+          <label for="signup-confirm-password">Confirm Password <span aria-hidden="true">*</span></label>
+          <input id="signup-confirm-password" name="confirm-password" type="password" autocomplete="new-password" required />
+
+          <p class="password-strength" id="passwordStrength">Password Strength: 0%</p>
+
+          <button class="primary-btn" type="submit">Create Account</button>
+          <button id="backToSignIn" class="link-btn" type="button">Back to Login</button>
+        </form>
+      </section>
+    </section>
+
+    <p class="status-message" id="statusMessage" role="status"></p>
+  </main>
+
+  <script defer src="public/js/main.js"></script>
 </body>
 </html>
